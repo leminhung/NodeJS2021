@@ -1,0 +1,18 @@
+<div>
+  <%if(todos.length > 0) {%>
+    <ul>
+      <%for(todo of todos) {%>
+        <li>
+          <p><%= todo.title%></p>
+          <a href="/edit/<%= todo.id%>">Edit</a>
+          <form action="/delete" method="POST">
+            <input type="hidden" value="<%= todo.id%>" name="id">
+            <button type="submit">Delete</button>
+          </form>
+        </li>
+      <%}%>
+    </ul>
+  <%} else {%>
+  <%}%>
+  
+</div>
