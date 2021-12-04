@@ -83,17 +83,9 @@ module.exports = {
 
         // create token to send mail
         const token = buffer.toString("hex");
-        await User.findByIdAndUpdate(
-          user._id,
-          { resetToken: token, resetTokenExpiration: Date.now() + 3600000 },
-          function (err, docs) {
-            if (err) {
-              console.log(err);
-            } else {
-              console.log("Updated User : ", docs);
-            }
-          }
-        );
+        user.resetToken = token;
+        user.resetTokenExpiration = Date.now() + 3600000;
+        await user.save();
 
         // sent mail
         let message = {
@@ -110,5 +102,29 @@ module.exports = {
         console.log("[error--]", error);
       }
     });
+  },
+  postNewPassword: async (req, res, next) => {
+    const userId = req.body.userId;
+    const newPassword = req.body.newPassword;
+    const token = req.body.token;
+    const user = await User.findOne({
+      _id: userId,
+      resetToken: token,
+      resetTokenExpiration: { $gt: Date.now() },
+    });
+    if (!user) {
+      return res
+        .status(codeEnum.NOT_FOUND)
+        .json({ msg: msgEnum.USER_NOT_FOUND });
+    }
+    await bcrypt.hash(newPassword, 12, async (err, hash) => {
+      user.password = hash;
+      user.resetToken = undefined;
+      user.resetTokenExpiration = undefined;
+      await user.save();
+    });
+    return res
+      .status(codeEnum.SUCCESS)
+      .json({ msg: msgEnum.RESET_PASSWORD_SUCCESS });
   },
 };

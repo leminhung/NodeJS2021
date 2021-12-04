@@ -14,6 +14,8 @@ const userSchema = new Schema({
   role: {
     type: String,
   },
+  resetToken: String,
+  resetTokenExpiration: Date,
 });
 
 module.exports = mongoose.model("User", userSchema);
