@@ -11,18 +11,28 @@ module.exports = {
     res.status(codeEnum.SUCCESS).json({ msg: msgEnum.ADD_SUCCESS });
   },
   getProducts: async (req, res, next) => {
-    const products = await Product.find({});
-    res.status(codeEnum.SUCCESS).json({ products });
+    try {
+      const products = await Product.find({});
+      res.status(codeEnum.SUCCESS).json({ products });
+    } catch (error) {
+      console.log("[error--]", error);
+      res.status(codeEnum.CONFLICT).json({ msg: error.message });
+    }
   },
   getProduct: async (req, res, next) => {
-    const productId = req.params.productId;
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res
-        .status(codeEnum.NOT_FOUND)
-        .json({ msg: msgEnum.DATA_NOT_FOUND });
+    try {
+      const productId = req.params.productId;
+      const product = await Product.findById(productId);
+      console.log("hello");
+      if (!product) {
+        return res
+          .status(codeEnum.NOT_FOUND)
+          .json({ msg: msgEnum.DATA_NOT_FOUND });
+      }
+      return res.status(codeEnum.SUCCESS).json({ product });
+    } catch (error) {
+      console.log("[error--]", error);
     }
-    return res.status(codeEnum.SUCCESS).json({ product });
   },
   deleteProduct: async (req, res, next) => {
     const productId = req.params.productId;
@@ -31,9 +41,11 @@ module.exports = {
       userId: req.user._id,
     });
     if (!product) {
-      return res
-        .status(codeEnum.NOT_FOUND)
-        .json({ msg: msgEnum.DATA_NOT_FOUND });
+      return res.status(codeEnum.NOT_FOUND).json({
+        msg:
+          msgEnum.DATA_NOT_FOUND +
+          " hoặc bạn không phải là người tạo ra sản phẩm này",
+      });
     }
 
     return res.status(codeEnum.SUCCESS).json({ product });

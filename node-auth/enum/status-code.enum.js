@@ -9,5 +9,5 @@ exports.codeEnum = {
   SERVER_ERROR: 500,
   BAD_GATEWAY: 502,
   GATEWAY_TIMEOUT: 504,
-  EXISTING: 409,
+  CONFLICT: 409,
 };
