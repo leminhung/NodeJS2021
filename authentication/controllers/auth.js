@@ -8,8 +8,13 @@ const { personEnum } = require("../enum/person.enum");
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
+<<<<<<< HEAD
     user: personEnum.USERNAME,
     pass: personEnum.PASSWORD,
+=======
+    user: "leminhhungtabletennis@gmail.com",
+    pass: "password",
+>>>>>>> dc9be2d993b75065277423826585031b964240a8
   },
 });
 
