@@ -1,28 +1,17 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const nodemailer = require("nodemailer");
-// const sendgridTransport = require("nodemailer-sendgrid-transport");
+const { validationResult } = require("express-validator");
 const crypto = require("crypto");
+const { personEnum } = require("../enum/person.enum");
 
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
-    user: "leminhhungtabletennis@gmail.com",
-    pass: "Nopainnogain2001@@",
+    user: personEnum.USERNAME,
+    pass: personEnum.PASSWORD,
   },
 });
-
-exports.getLogin = (req, res, next) => {
-  let message = req.flash("error");
-  if (message.length > 0) message = message[0];
-  else message = null;
-  console.log(message);
-  res.render("auth/login", {
-    path: "/login",
-    pageTitle: "Login",
-    errorMessage: message,
-  });
-};
 
 exports.getSignup = (req, res, next) => {
   let message = req.flash("error");
@@ -32,17 +21,65 @@ exports.getSignup = (req, res, next) => {
     path: "/signup",
     pageTitle: "Signup",
     errorMessage: message,
+    oldInput: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validationErrors: [],
+  });
+};
+
+exports.getLogin = (req, res, next) => {
+  let message = req.flash("error");
+  console.log(message);
+  if (message.length > 0) message = message[0];
+  else message = null;
+  res.render("auth/login", {
+    path: "/login",
+    pageTitle: "Login",
+    errorMessage: message,
+    oldInput: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validationErrors: [],
   });
 };
 
 exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
+  // Lưu trữ các thể loại lỗi ở middleware trước
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    // console.log(errors.array());
+    return res.status(422).render("auth/login", {
+      path: "/login",
+      pageTitle: "Login",
+      errorMessage: errors.array()[0].msg,
+      oldInput: {
+        email,
+        password,
+      },
+      validationErrors: errors.array(),
+    });
+  }
+
   User.findOne({ email })
     .then((user) => {
       if (!user) {
-        req.flash("error", "Invalid email or password!");
-        return res.redirect("/login");
+        res.status(422).render("auth/login", {
+          path: "/login",
+          pageTitle: "Login",
+          errorMessage: "Email is not existing!",
+          oldInput: {
+            email,
+            password,
+          },
+          validationErrors: [],
+        });
       }
       bcrypt
         .compare(password, user.password)
@@ -55,52 +92,65 @@ exports.postLogin = (req, res, next) => {
               res.redirect("/");
             });
           }
-          req.flash("error", "Invalid email or password!");
-
-          res.redirect("/login");
+          return res.status(422).render("auth/login", {
+            path: "/login",
+            pageTitle: "Login",
+            errorMessage: "Email is not existing!",
+            oldInput: {
+              email,
+              password,
+            },
+            validationErrors: [],
+          });
         })
         .catch((err) => console.log(err));
     })
-    .catch((err) => console.log(err));
+    .catch((err) => console.log("[err--]", err));
 };
 
 exports.postSignup = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
-  const confirmPassword = req.body.confirmPassword;
-  User.findOne({ email })
-    .then((user) => {
-      if (user) {
-        req.flash("error", "Email is existing, try another!");
-        return res.redirect("/signup");
-      }
-      return bcrypt
-        .hash(password, 12)
-        .then((bcryptPassword) => {
-          let newUser = new User({
-            email,
-            password: bcryptPassword,
-            cart: { items: [] },
-          });
-          return newUser.save();
-        })
-        .then(() => {
-          res.redirect("/login");
-          let message = {
-            from: `MinHungg`,
-            to: email,
-            subject: "Signup successfully",
-            html: "<h1>You successfully sign up!<h1>",
-          };
-          return transporter.sendMail(message);
-        })
-        .then((result) => {
-          console.log("[signup--]", result);
-        })
-        .catch((err) => console.log("[err--]", err));
+  // Lưu trữ các thể loại lỗi ở middleware trước
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log(errors.array());
+    return res.status(422).render("auth/signup", {
+      path: "/signup",
+      pageTitle: "Signup",
+      errorMessage: errors.array()[0].msg,
+      oldInput: {
+        email,
+        password,
+        confirmPassword: req.body.confirmPassword,
+      },
+      validationErrors: errors.array(),
+    });
+  }
+  bcrypt
+    .hash(password, 12)
+    .then((bcryptPassword) => {
+      let newUser = new User({
+        email,
+        password: bcryptPassword,
+        cart: { items: [] },
+      });
+      return newUser.save();
     })
-
-    .catch((err) => console.log("co loi xay ra"));
+    .then(() => {
+      res.redirect("/login");
+      let message = {
+        from: `MinHungg`,
+        to: email,
+        subject: "Signup successfully",
+        html: "<h1>You successfully sign up!<h1>",
+      };
+      return transporter.sendMail(message);
+    })
+    .then((result) => {
+      console.log("[signup--]", result);
+    })
+    .catch((err) => console.log("[err--]", err));
 };
 
 exports.postLogout = (req, res, next) => {
