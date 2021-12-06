@@ -41,18 +41,6 @@ app.use(
 app.use(flash());
 //
 const csrfProtection = csrf();
-
-app.use((req, res, next) => {
-  if (!req.session.user) {
-    return next();
-  }
-  User.findById(req.session.user._id)
-    .then((user) => {
-      req.user = user;
-      next();
-    })
-    .catch((err) => console.log(err));
-});
 app.use(csrfProtection);
 
 // tạo biến local để lưu trữ các biến => có thể sử dụng vs mọi req
@@ -62,11 +50,46 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  // Dùng throw bên ngoài async func sẽ được express chấp nhận
+  // throw new Error("Yummy code");
+  if (!req.session.user) {
+    return next();
+  }
+  User.findById(req.session.user._id)
+    .then((user) => {
+      // throw new Error("Dummy"); // chuyển lỗi xuống catch
+      if (!user) {
+        return next();
+      }
+      req.user = user;
+      next();
+    })
+    .catch((err) => {
+      next(new Error(err)); //good ideal :))
+      // throw new Error(err); không đươc express chấp nhận
+    });
+});
+
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get("/500", errorController.get500);
+
 app.use(errorController.get404);
+
+app.use((error, req, res, next) => {
+  // Sử dụng res.redirect thì sẽ có trường hợp bị lặp vô tận
+  // res.redirect("/500");
+
+  // good ideal để tránh trường hợp lặp vô tận (phân tích kĩ một chút là thấy vấn đề)
+  res.status(500).render("500", {
+    pageTitle: "Page invalid",
+    path: "/500",
+    isAuthenticated: req.session.isLoggedIn,
+  });
+});
 
 mongoose
   .connect(MONGODB_URI, {

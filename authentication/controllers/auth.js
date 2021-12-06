@@ -103,7 +103,12 @@ exports.postLogin = (req, res, next) => {
         })
         .catch((err) => console.log(err));
     })
-    .catch((err) => console.log("[err--]", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      console.log("[err--]", err.message);
+      return next(error);
+    });
 };
 
 exports.postSignup = (req, res, next) => {
@@ -148,7 +153,12 @@ exports.postSignup = (req, res, next) => {
     .then((result) => {
       console.log("[signup--]", result);
     })
-    .catch((err) => console.log("[err--]", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      console.log("[err--]", err.message);
+      return next(error);
+    });
 };
 
 exports.postLogout = (req, res, next) => {
@@ -203,7 +213,10 @@ exports.postReset = (req, res, next) => {
         console.log("Reset--]", result);
       })
       .catch((err) => {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
         console.log("[err--]", err.message);
+        return next(error);
       });
   });
 };
@@ -225,7 +238,10 @@ exports.getNewPassword = (req, res, next) => {
       });
     })
     .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
       console.log("[err--]", err.message);
+      return next(error);
     });
 };
 
@@ -254,6 +270,9 @@ exports.postNewPassword = (req, res, next) => {
       res.redirect("/");
     })
     .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
       console.log("[err--]", err.message);
+      return next(error);
     });
 };
