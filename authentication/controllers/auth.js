@@ -8,13 +8,8 @@ const { personEnum } = require("../enum/person.enum");
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
-<<<<<<< HEAD
     user: personEnum.USERNAME,
     pass: personEnum.PASSWORD,
-=======
-    user: "leminhhungtabletennis@gmail.com",
-    pass: "password",
->>>>>>> dc9be2d993b75065277423826585031b964240a8
   },
 });
 
@@ -47,7 +42,6 @@ exports.getLogin = (req, res, next) => {
     oldInput: {
       email: "",
       password: "",
-      confirmPassword: "",
     },
     validationErrors: [],
   });
@@ -59,7 +53,6 @@ exports.postLogin = (req, res, next) => {
   // Lưu trữ các thể loại lỗi ở middleware trước
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    // console.log(errors.array());
     return res.status(422).render("auth/login", {
       path: "/login",
       pageTitle: "Login",
@@ -75,10 +68,10 @@ exports.postLogin = (req, res, next) => {
   User.findOne({ email })
     .then((user) => {
       if (!user) {
-        res.status(422).render("auth/login", {
+        return res.status(422).render("auth/login", {
           path: "/login",
           pageTitle: "Login",
-          errorMessage: "Email is not existing!",
+          errorMessage: "Invalid email or password",
           oldInput: {
             email,
             password,
@@ -100,7 +93,7 @@ exports.postLogin = (req, res, next) => {
           return res.status(422).render("auth/login", {
             path: "/login",
             pageTitle: "Login",
-            errorMessage: "Email is not existing!",
+            errorMessage: "Invalid email or password",
             oldInput: {
               email,
               password,
