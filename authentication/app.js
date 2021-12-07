@@ -9,11 +9,33 @@ const csrf = require("csurf");
 const flash = require("connect-flash");
 const errorController = require("./controllers/error");
 const User = require("./models/user");
+const multer = require("multer");
 
+// multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, new Date().toISOString() + "-" + file.originalname);
+  },
+});
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else cb(null, false);
+};
+
+// mongodb
 const MONGODB_URI =
   "mongodb+srv://leminhunglmh:leminhhung123@cluster0.otp0j.mongodb.net/shop";
 
 const app = express();
+// store session into db
 const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: "sessions",
@@ -27,7 +49,11 @@ const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(multer({ storage, fileFilter }).single("image"));
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "images")));
+
+// session middleware
 app.use(
   session({
     secret: "my secret",

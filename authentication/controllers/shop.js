@@ -1,5 +1,9 @@
 const Product = require("../models/product");
 const Order = require("../models/order");
+const fs = require("fs");
+const path = require("path");
+const PDFDocument = require("pdfkit");
+// Create a document
 
 exports.getProducts = (req, res, next) => {
   Product.find()
@@ -147,4 +151,77 @@ exports.getOrders = (req, res, next) => {
       console.log("[err--]", err.message);
       return next(error);
     });
+};
+
+// Download file (Tự động tạo pdf biên lại mua hàng)
+exports.getInvoice = (req, res, next) => {
+  const orderId = req.params.orderId;
+  const invoiceName = "invoice-" + orderId + ".pdf";
+  const invoicePath = path.join("data", "invoices", invoiceName);
+  Order.findById(orderId)
+    .then((order) => {
+      if (!order) {
+        return next(new Error("No order found!"));
+      }
+      if (order.user.userId.toString() !== req.user._id.toString()) {
+        return next(new Error("Unauthorized!"));
+      }
+
+      // Tạo file
+      const pdfDoc = new PDFDocument();
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        'inline; filename=" ' + invoiceName + ' "'
+      );
+      pdfDoc.pipe(fs.createWriteStream(invoicePath));
+      pdfDoc.pipe(res);
+      pdfDoc.fontSize(24).text("Invoice", {
+        underline: true,
+      });
+      pdfDoc.text("-----------------------------------------------------");
+
+      let totalPrice = 0;
+      order.products.forEach((prod) => {
+        totalPrice += prod.product.price * prod.quantity;
+        pdfDoc
+          .fontSize(14)
+          .text(
+            prod.product.title +
+              " - " +
+              prod.product.price +
+              "x" +
+              prod.quantity
+          );
+      });
+
+      pdfDoc.fontSize(14).text("-------------");
+      pdfDoc.fontSize(14).text("Total price: " + totalPrice);
+      pdfDoc.end();
+
+      // Cách này chỉ phù hợp vs file có kích thước nhỏ
+      // fs.readFile(invoicePath, (err, data) => {
+      //   if (err) {
+      //     return next(new Error(err));
+      //   }
+      //   // lựa chọn thể lọai download
+      //   res.setHeader("Content-Type", "application/pdf");
+      //   // lựa chọn cách thức download
+      //   res.setHeader(
+      //     "Content-Disposition",
+      //     'inline; filename=" ' + invoiceName + ' "'
+      //   );
+      //   res.send(data);
+      // });
+
+      // Phù hợp vs file có kích thước lớn
+      // const file = fs.createReadStream(invoicePath);
+      // res.setHeader("Content-Type", "application/pdf");
+      // res.setHeader(
+      //   "Content-Disposition",
+      //   'inline; filename=" ' + invoiceName + ' "'
+      // );
+      // file.pipe(res);
+    })
+    .catch((err) => next(err));
 };
