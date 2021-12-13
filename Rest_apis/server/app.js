@@ -30,7 +30,8 @@ const fileFilter = (req, file, cb) => {
 const MONGODB_URI =
   "mongodb+srv://leminhunglmh:leminhhung123@cluster0.otp0j.mongodb.net/status";
 
-// app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
+// x-www-form-urlencoded <form>
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json()); // application/json
 app.use(multer({ storage, fileFilter }).single("image"));
 
@@ -40,7 +41,10 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Methods",
     "OPTIONS, GET, POST, PUT, PATCH, DELETE"
   );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, origin, x-requested-with"
+  );
   next();
 });
 
@@ -61,7 +65,12 @@ mongoose
     useNewUrlParser: true,
   })
   .then(() => {
-    app.listen(8080);
+    const server = app.listen(8080);
+    console.log("Hell0");
+    const io = require("./socket").init(server);
+    io.on("connection", (socket) => {
+      console.log("Client connected!");
+    });
   })
   .catch((err) => {
     console.log(err);
