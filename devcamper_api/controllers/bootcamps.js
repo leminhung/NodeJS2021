@@ -7,7 +7,7 @@ const asyncHandler = require("../middleware/async");
 // @route     GET /api/v1/bootcamps
 // @access    Public
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-  res.status(200).json(res.advancedResult);
+  res.status(200).json(res.advancedResults);
 });
 
 // @desc      Get single bootcamp

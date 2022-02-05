@@ -7,9 +7,13 @@ const bodyParser = require("body-parser");
 const fileupload = require("express-fileupload");
 const cookieParser = require("cookie-parser");
 const errorHandler = require("./middleware/error");
+
 const bootcampRoutes = require("./routes/bootcamps");
 const courseRoutes = require("./routes/courses");
 const authRoutes = require("./routes/auth");
+const usersRoutes = require("./routes/users");
+const reviewsRoutes = require("./routes/review");
+
 const connectDB = require("./config/db");
 
 // Load env vars
@@ -45,6 +49,8 @@ app.get("/", (req, res) => res.send({ name: "port" }));
 app.use("/api/v1/bootcamps", bootcampRoutes);
 app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/reviews", reviewsRoutes);
 
 // Error handlers
 app.use(errorHandler);

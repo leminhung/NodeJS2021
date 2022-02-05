@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-
 const {
   getBootcamp,
   getBootcamps,
@@ -11,15 +10,17 @@ const {
 } = require("../controllers/bootcamps");
 
 const Bootcamp = require("../models/Bootcamp");
-const advancedResult = require("../middleware/advancedResult");
 
 // Include other resoure routers
 const courseRouter = require("./courses");
+const reviewRouter = require("./review");
 
+const advancedResults = require("../middleware/advancedResults");
 const { protect, authorize } = require("../middleware/auth");
 
 // Re-route into other resoure routers
 router.use("/:bootcampId/courses", courseRouter);
+router.use("/:bootcampId/reviews", reviewRouter);
 
 router
   .route("/:id/photo")
@@ -27,7 +28,7 @@ router
 
 router
   .route("/")
-  .get(advancedResult(Bootcamp, "courses"), getBootcamps)
+  .get(advancedResults(Bootcamp, "courses"), getBootcamps)
   .post(protect, authorize("publisher", "admin"), createBootcamp);
 
 router
